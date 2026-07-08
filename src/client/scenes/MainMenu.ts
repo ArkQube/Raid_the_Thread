@@ -6,6 +6,7 @@ export class MainMenu extends Scene {
   private subtitleText: GameObjects.Text | null = null;
   private bossText: GameObjects.Text | null = null;
   private progressText: GameObjects.Text | null = null;
+  private progressBg: GameObjects.Rectangle | null = null;
   private progressFill: GameObjects.Rectangle | null = null;
   private statsText: GameObjects.Text | null = null;
   private playButton: GameObjects.Text | null = null;
@@ -24,6 +25,7 @@ export class MainMenu extends Scene {
     this.subtitleText = null;
     this.bossText = null;
     this.progressText = null;
+    this.progressBg = null;
     this.progressFill = null;
     this.statsText = null;
     this.playButton = null;
@@ -153,10 +155,15 @@ export class MainMenu extends Scene {
     this.bossText.setPosition(width / 2, height * 0.32).setScale(scaleFactor);
 
     const progressY = height * 0.44;
-    if (!this.progressFill) {
-      this.add
+    if (!this.progressBg) {
+      this.progressBg = this.add
         .rectangle(width / 2, progressY, panelWidth, 18, 0x1b2145, 1)
         .setStrokeStyle(2, 0x3b4a75);
+    }
+    this.progressBg.setPosition(width / 2, progressY);
+    this.progressBg.setSize(panelWidth, 18);
+
+    if (!this.progressFill) {
       this.progressFill = this.add
         .rectangle(width / 2 - panelWidth / 2, progressY, 8, 14, 0xff6b35, 1)
         .setOrigin(0, 0.5);
