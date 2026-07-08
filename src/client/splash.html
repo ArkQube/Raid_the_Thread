@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" type="text/css" href="splash.css" />
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width, height=device-height, user-scalable=0"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>Raid the Thread</title>
+  </head>
+  <body class="app">
+    <div class="raid-bg">
+      <div class="ember e1">✦</div>
+      <div class="ember e2">🔥</div>
+      <div class="ember e3">💎</div>
+      <div class="ember e4">⚔️</div>
+      <div class="ember e5">✧</div>
+    </div>
+
+    <main class="content">
+      <div class="logo-container">
+        <div class="raid-icon" id="boss-emoji">🐌</div>
+        <h1 class="title">RAID THE THREAD</h1>
+        <p class="subtitle">Daily Subreddit Boss</p>
+      </div>
+
+      <section class="boss-card">
+        <p class="boss-label">Today&apos;s Boss</p>
+        <h2 class="boss-name" id="boss-name">Opening dungeon...</h2>
+        <p class="boss-title" id="boss-title">The subreddit raid is forming.</p>
+        <div class="progress-shell">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <p class="progress-copy" id="progress-copy">
+          0% defeated • gather the raiders
+        </p>
+      </section>
+
+      <div class="stats-row">
+        <div class="stat-box">
+          <span class="stat-value" id="streak-value">-</span>
+          <span class="stat-label">🔥 Streak</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-value" id="damage-value">-</span>
+          <span class="stat-label">⚔️ Best</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-value" id="players-value">-</span>
+          <span class="stat-label">👥 Raiders</span>
+        </div>
+      </div>
+
+      <p class="description" id="description">
+        Dodge traps, grab gems, and damage the boss for everyone.
+      </p>
+    </main>
+
+    <div class="button-container">
+      <button class="start-button" id="start-button">
+        <span class="btn-icon">⚔️</span> Enter Today&apos;s Raid
+      </button>
+    </div>
+
+    <script type="module" src="splash.ts" defer></script>
+  </body>
+</html>
