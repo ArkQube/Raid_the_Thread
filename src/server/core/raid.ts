@@ -90,7 +90,7 @@ export function generateDailyRaid(
   selectedModifier?: RaidModifier,
 ): DailyRaid {
   const hash = hashDateString(dateStr);
-  const maxHp = 8000 + (hash % 6) * 2000;
+  const maxHp = 100000 + (hash % 16) * 10000;
   const bossIndex = hash % BOSS_NAMES.length;
   const titleIndex = Math.floor(hash / 7) % BOSS_TITLES.length;
   const modifierId = selectedModifier ?? getDefaultModifierForDate(dateStr);
