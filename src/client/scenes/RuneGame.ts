@@ -607,7 +607,7 @@ export class RuneGame extends Scene {
     const rampFactor = 1 - phase * 0.6; // rates shrink by up to 60% at end
 
     const baseEnemyRate = modifier === 'ghosts' ? 1000 : 1300;
-    const baseGemRate = modifier === 'treasure' ? 900 : 1200; // 20% faster than 1400/1800
+    const baseGemRate = modifier === 'treasure' ? 720 : 960; // 20% faster than 1400/1800
     const baseTrapRate = modifier === 'lava' ? 1400 : 2200;
 
     const enemyRate = baseEnemyRate * rampFactor;
@@ -643,7 +643,7 @@ export class RuneGame extends Scene {
     this.enemies.push({
       body: elite,
       speed: 75, // Very fast
-      hp: 15, // Extremely tanky
+      hp: 5, // Extremely tanky
     });
     this.flashText('ELITE ENEMY!', this.scale.width / 2, 200, '#ff0000');
   }
@@ -671,7 +671,7 @@ export class RuneGame extends Scene {
     this.enemies.push({
       body: enemy,
       speed: 28 + Math.random() * 22 + phaseSpeed,
-      hp: 3,
+      hp: 1,
     });
   }
 
