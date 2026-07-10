@@ -14,6 +14,7 @@ export class MainMenu extends Scene {
   private helpButton: GameObjects.Text | null = null;
   private tutorialContainer: GameObjects.Container | null = null;
   private particles: GameObjects.Arc[] = [];
+  private bgElements: GameObjects.GameObject[] = [];
   private gameData: InitResponse | null = null;
 
   constructor() {
@@ -32,23 +33,32 @@ export class MainMenu extends Scene {
     this.helpButton = null;
     this.tutorialContainer = null;
     this.particles = [];
+    this.bgElements = [];
     this.gameData = null;
   }
 
   create() {
     this.cameras.main.setBackgroundColor(0x0a0e1a);
-    this.createDungeonBackground();
     void this.loadGameData();
-    this.createAmbientParticles();
+    
+    // Background and layout will be initially drawn here
     this.refreshLayout();
-    this.scale.on('resize', () => this.refreshLayout());
+    
+    this.scale.on('resize', () => {
+      this.refreshLayout();
+    });
   }
 
   private createDungeonBackground() {
+    // Clear old elements
+    this.bgElements.forEach((el) => el.destroy());
+    this.bgElements = [];
+
     const { width, height } = this.scale;
 
     // Stone tile floor covering the entire background
     const graphics = this.add.graphics();
+    this.bgElements.push(graphics);
     const tileSize = Math.max(48, Math.min(72, Math.floor(width / 6)));
     const seed = (x: number, y: number) => ((x * 2654435761) ^ (y * 2246822519)) >>> 0;
     for (let ty = 0; ty < height; ty += tileSize) {
@@ -92,10 +102,10 @@ export class MainMenu extends Scene {
     // Edge vignette shadows
     for (let i = 0; i < 5; i++) {
       const alpha = 0.35 - i * 0.06;
-      this.add.rectangle(width / 2, i * 12, width, 24, 0x050810, Math.max(0, alpha));
-      this.add.rectangle(width / 2, height - i * 12, width, 24, 0x050810, Math.max(0, alpha));
-      this.add.rectangle(i * 12, height / 2, 24, height, 0x050810, Math.max(0, alpha));
-      this.add.rectangle(width - i * 12, height / 2, 24, height, 0x050810, Math.max(0, alpha));
+      this.bgElements.push(this.add.rectangle(width / 2, i * 12, width, 24, 0x050810, Math.max(0, alpha)));
+      this.bgElements.push(this.add.rectangle(width / 2, height - i * 12, width, 24, 0x050810, Math.max(0, alpha)));
+      this.bgElements.push(this.add.rectangle(i * 12, height / 2, 24, height, 0x050810, Math.max(0, alpha)));
+      this.bgElements.push(this.add.rectangle(width - i * 12, height / 2, 24, height, 0x050810, Math.max(0, alpha)));
     }
 
     // Flickering torches on the archway corners
@@ -108,7 +118,8 @@ export class MainMenu extends Scene {
     torchSpots.forEach((t) => {
       const glow = this.add.circle(t.x, t.y, 22, 0xff8c00, 0.08);
       const inner = this.add.circle(t.x, t.y, 10, 0xffaa33, 0.14);
-      this.add.text(t.x, t.y, '🔥', { fontSize: '12px' }).setOrigin(0.5);
+      const text = this.add.text(t.x, t.y, '🔥', { fontSize: '12px' }).setOrigin(0.5);
+      this.bgElements.push(glow, inner, text);
       this.tweens.add({
         targets: [glow, inner],
         alpha: { from: glow.alpha, to: glow.alpha * 0.3 },
@@ -161,6 +172,9 @@ export class MainMenu extends Scene {
   }
 
   private createAmbientParticles() {
+    this.particles.forEach((p) => p.destroy());
+    this.particles = [];
+
     const { width, height } = this.scale;
     // Dungeon embers — warm orange and cool blue
     const colors = [0xff6b35, 0xffd166, 0xff8c00, 0x00d4ff, 0x72efdd];
@@ -190,6 +204,11 @@ export class MainMenu extends Scene {
   private refreshLayout(): void {
     const { width, height } = this.scale;
     this.cameras.resize(width, height);
+    
+    // Redraw backgrounds to match new dimensions
+    this.createDungeonBackground();
+    this.createAmbientParticles();
+
     const scaleFactor = Math.min(width / 600, height / 820, 1.15);
     const panelWidth = Math.min(width * 0.86, 460);
 
