@@ -36,10 +36,89 @@ export class MainMenu extends Scene {
   }
 
   create() {
+    this.cameras.main.setBackgroundColor(0x0a0e1a);
+    this.createDungeonBackground();
     void this.loadGameData();
     this.createAmbientParticles();
     this.refreshLayout();
     this.scale.on('resize', () => this.refreshLayout());
+  }
+
+  private createDungeonBackground() {
+    const { width, height } = this.scale;
+
+    // Stone tile floor covering the entire background
+    const graphics = this.add.graphics();
+    const tileSize = Math.max(48, Math.min(72, Math.floor(width / 6)));
+    const seed = (x: number, y: number) => ((x * 2654435761) ^ (y * 2246822519)) >>> 0;
+    for (let ty = 0; ty < height; ty += tileSize) {
+      for (let tx = 0; tx < width; tx += tileSize) {
+        const col = Math.floor(tx / tileSize);
+        const row = Math.floor(ty / tileSize);
+        const hash = seed(col, row) % 100;
+        const shade = hash < 35 ? 0x12162a : hash < 60 ? 0x0f1324 : hash < 85 ? 0x161b30 : 0x0d1020;
+        graphics.fillStyle(shade, 1);
+        graphics.fillRect(tx + 1, ty + 1, tileSize - 2, tileSize - 2);
+        graphics.lineStyle(1, 0x080b14, 0.6);
+        graphics.strokeRect(tx + 1, ty + 1, tileSize - 2, tileSize - 2);
+
+        // Subtle cracks on ~15% of tiles
+        if (hash < 15) {
+          graphics.lineStyle(1, 0x080b14, 0.4);
+          const cx = tx + tileSize * 0.25 + (hash % 4) * 4;
+          const cy = ty + tileSize * 0.2 + (hash % 6) * 3;
+          graphics.lineBetween(cx, cy, cx + tileSize * 0.5, cy + tileSize * 0.6);
+        }
+      }
+    }
+
+    // Dungeon archway frame around center content
+    const archWidth = Math.min(width * 0.88, 480);
+    const archX = (width - archWidth) / 2;
+    const archTop = height * 0.06;
+    const archBottom = height * 0.92;
+    const archHeight = archBottom - archTop;
+
+    // Outer stone border
+    graphics.lineStyle(4, 0x2a2f4a, 0.8);
+    graphics.strokeRoundedRect(archX, archTop, archWidth, archHeight, 12);
+    // Inner accent line
+    graphics.lineStyle(2, 0xff6b35, 0.35);
+    graphics.strokeRoundedRect(archX + 6, archTop + 6, archWidth - 12, archHeight - 12, 8);
+    // Dark fill inside archway
+    graphics.fillStyle(0x0a0e1a, 0.6);
+    graphics.fillRoundedRect(archX + 8, archTop + 8, archWidth - 16, archHeight - 16, 6);
+
+    // Edge vignette shadows
+    for (let i = 0; i < 5; i++) {
+      const alpha = 0.35 - i * 0.06;
+      this.add.rectangle(width / 2, i * 12, width, 24, 0x050810, Math.max(0, alpha));
+      this.add.rectangle(width / 2, height - i * 12, width, 24, 0x050810, Math.max(0, alpha));
+      this.add.rectangle(i * 12, height / 2, 24, height, 0x050810, Math.max(0, alpha));
+      this.add.rectangle(width - i * 12, height / 2, 24, height, 0x050810, Math.max(0, alpha));
+    }
+
+    // Flickering torches on the archway corners
+    const torchSpots = [
+      { x: archX + 12, y: archTop + 20 },
+      { x: archX + archWidth - 12, y: archTop + 20 },
+      { x: archX + 12, y: archBottom - 20 },
+      { x: archX + archWidth - 12, y: archBottom - 20 },
+    ];
+    torchSpots.forEach((t) => {
+      const glow = this.add.circle(t.x, t.y, 22, 0xff8c00, 0.08);
+      const inner = this.add.circle(t.x, t.y, 10, 0xffaa33, 0.14);
+      this.add.text(t.x, t.y, '🔥', { fontSize: '12px' }).setOrigin(0.5);
+      this.tweens.add({
+        targets: [glow, inner],
+        alpha: { from: glow.alpha, to: glow.alpha * 0.3 },
+        duration: 350 + Math.random() * 500,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+        delay: Math.random() * 400,
+      });
+    });
   }
 
   private async loadGameData() {
@@ -83,26 +162,27 @@ export class MainMenu extends Scene {
 
   private createAmbientParticles() {
     const { width, height } = this.scale;
-    const colors = [0xff6b35, 0xffd166, 0x7c3aed, 0x00d4ff, 0x00ff88];
+    // Dungeon embers — warm orange and cool blue
+    const colors = [0xff6b35, 0xffd166, 0xff8c00, 0x00d4ff, 0x72efdd];
 
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 28; i++) {
       const dot = this.add.circle(
         Math.random() * width,
         Math.random() * height,
-        Math.random() * 2 + 1,
+        Math.random() * 2 + 0.5,
         colors[Math.floor(Math.random() * colors.length)] ?? 0xffd166,
-        0.25
+        0.2
       );
       this.particles.push(dot);
       this.tweens.add({
         targets: dot,
-        y: dot.y - 35 - Math.random() * 45,
-        alpha: { from: 0.08, to: 0.45 },
-        duration: 3000 + Math.random() * 4500,
+        y: dot.y - 40 - Math.random() * 50,
+        alpha: { from: 0.05, to: 0.4 },
+        duration: 3500 + Math.random() * 4000,
         yoyo: true,
         repeat: -1,
         ease: 'Sine.easeInOut',
-        delay: Math.random() * 1800,
+        delay: Math.random() * 2000,
       });
     }
   }
