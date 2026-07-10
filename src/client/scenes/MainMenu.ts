@@ -57,7 +57,7 @@ export class MainMenu extends Scene {
     const { width, height } = this.scale;
 
     // Stone tile floor covering the entire background
-    const graphics = this.add.graphics();
+    const graphics = this.add.graphics().setDepth(-1);
     this.bgElements.push(graphics);
     const tileSize = Math.max(48, Math.min(72, Math.floor(width / 6)));
     const seed = (x: number, y: number) => ((x * 2654435761) ^ (y * 2246822519)) >>> 0;
@@ -102,10 +102,10 @@ export class MainMenu extends Scene {
     // Edge vignette shadows
     for (let i = 0; i < 5; i++) {
       const alpha = 0.35 - i * 0.06;
-      this.bgElements.push(this.add.rectangle(width / 2, i * 12, width, 24, 0x050810, Math.max(0, alpha)));
-      this.bgElements.push(this.add.rectangle(width / 2, height - i * 12, width, 24, 0x050810, Math.max(0, alpha)));
-      this.bgElements.push(this.add.rectangle(i * 12, height / 2, 24, height, 0x050810, Math.max(0, alpha)));
-      this.bgElements.push(this.add.rectangle(width - i * 12, height / 2, 24, height, 0x050810, Math.max(0, alpha)));
+      this.bgElements.push(this.add.rectangle(width / 2, i * 12, width, 24, 0x050810, Math.max(0, alpha)).setDepth(-1));
+      this.bgElements.push(this.add.rectangle(width / 2, height - i * 12, width, 24, 0x050810, Math.max(0, alpha)).setDepth(-1));
+      this.bgElements.push(this.add.rectangle(i * 12, height / 2, 24, height, 0x050810, Math.max(0, alpha)).setDepth(-1));
+      this.bgElements.push(this.add.rectangle(width - i * 12, height / 2, 24, height, 0x050810, Math.max(0, alpha)).setDepth(-1));
     }
 
     // Flickering torches on the archway corners
@@ -116,9 +116,9 @@ export class MainMenu extends Scene {
       { x: archX + archWidth - 12, y: archBottom - 20 },
     ];
     torchSpots.forEach((t) => {
-      const glow = this.add.circle(t.x, t.y, 22, 0xff8c00, 0.08);
-      const inner = this.add.circle(t.x, t.y, 10, 0xffaa33, 0.14);
-      const text = this.add.text(t.x, t.y, '🔥', { fontSize: '12px' }).setOrigin(0.5);
+      const glow = this.add.circle(t.x, t.y, 22, 0xff8c00, 0.08).setDepth(-1);
+      const inner = this.add.circle(t.x, t.y, 10, 0xffaa33, 0.14).setDepth(-1);
+      const text = this.add.text(t.x, t.y, '🔥', { fontSize: '12px' }).setOrigin(0.5).setDepth(-1);
       this.bgElements.push(glow, inner, text);
       this.tweens.add({
         targets: [glow, inner],
@@ -186,7 +186,7 @@ export class MainMenu extends Scene {
         Math.random() * 2 + 0.5,
         colors[Math.floor(Math.random() * colors.length)] ?? 0xffd166,
         0.2
-      );
+      ).setDepth(-1);
       this.particles.push(dot);
       this.tweens.add({
         targets: dot,
