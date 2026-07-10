@@ -31,6 +31,9 @@ export class RuneGame extends Scene {
   private hpText: Phaser.GameObjects.Text | null = null;
   private timerText: Phaser.GameObjects.Text | null = null;
   private damageText: Phaser.GameObjects.Text | null = null;
+  private scoreValueText: Phaser.GameObjects.Text | null = null;
+  private gemsValueText: Phaser.GameObjects.Text | null = null;
+  private koValueText: Phaser.GameObjects.Text | null = null;
   private bossHealthFill: Phaser.GameObjects.Rectangle | null = null;
   private bossHealthWidth = 0;
   private dashButton: Phaser.GameObjects.Arc | null = null;
@@ -71,6 +74,9 @@ export class RuneGame extends Scene {
     this.hpText = null;
     this.timerText = null;
     this.damageText = null;
+    this.scoreValueText = null;
+    this.gemsValueText = null;
+    this.koValueText = null;
     this.bossHealthFill = null;
     this.bossHealthWidth = 0;
     this.dashButton = null;
@@ -234,53 +240,127 @@ export class RuneGame extends Scene {
     height: number,
     modifierId: string
   ): void {
-    // Base floor
-    this.add.rectangle(width / 2, height / 2, width, height, 0x1f2335);
+    // Base floor — darker for oppressive dungeon feel
+    this.add.rectangle(width / 2, height / 2, width, height, 0x141824);
 
     const graphics = this.add.graphics();
-    graphics.fillStyle(0x282c44, 1);
+    graphics.fillStyle(0x1e2238, 1);
     graphics.fillRect(0, 112, width, height - 196);
 
-    // Draw procedural stone tiles
+    // Draw procedural stone tiles with worn texture
     const tileSize = Math.max(40, Math.min(64, Math.floor(width / 7)));
-    for (let y = 112; y < height - 84; y += tileSize) {
-      for (let x = 0; x < width; x += tileSize) {
-        // Alternating tile shades for a classic RPG dungeon floor look
-        const shade = (x / tileSize + y / tileSize) % 2 === 0 ? 0x2e334d : 0x24283b;
+    const seed = (x: number, y: number) => ((x * 2654435761) ^ (y * 2246822519)) >>> 0;
+    for (let ty = 112; ty < height - 84; ty += tileSize) {
+      for (let tx = 0; tx < width; tx += tileSize) {
+        const col = Math.floor(tx / tileSize);
+        const row = Math.floor((ty - 112) / tileSize);
+        // Varied tile shades for a hand-placed dungeon floor look
+        const hash = seed(col, row) % 100;
+        const shade = hash < 40 ? 0x262a42 : hash < 70 ? 0x1f2337 : hash < 90 ? 0x2a2f4a : 0x1b1f33;
         graphics.fillStyle(shade, 1);
-        graphics.fillRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
-        
+        graphics.fillRect(tx + 1, ty + 1, tileSize - 2, tileSize - 2);
+
         // Mortar lines (borders)
-        graphics.lineStyle(2, 0x171923, 0.6);
-        graphics.strokeRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
+        graphics.lineStyle(2, 0x0f1219, 0.7);
+        graphics.strokeRect(tx + 1, ty + 1, tileSize - 2, tileSize - 2);
+
+        // Random floor cracks on ~25% of tiles
+        if (hash < 25) {
+          graphics.lineStyle(1, 0x0d0f17, 0.5);
+          const cx = tx + tileSize * 0.3 + (hash % 5) * 3;
+          const cy = ty + tileSize * 0.2 + (hash % 7) * 2;
+          graphics.lineBetween(cx, cy, cx + tileSize * 0.4, cy + tileSize * 0.5);
+          if (hash < 12) {
+            graphics.lineBetween(cx + tileSize * 0.2, cy + tileSize * 0.25, cx + tileSize * 0.5, cy + tileSize * 0.15);
+          }
+        }
+      }
+    }
+
+    // Scattered floor debris — tiny dark shapes to break up the grid
+    const debrisCount = Math.floor(width * (height - 196) / 4000);
+    for (let i = 0; i < debrisCount; i++) {
+      const dx = Math.random() * width;
+      const dy = 120 + Math.random() * (height - 220);
+      const size = 2 + Math.random() * 3;
+      graphics.fillStyle(0x111420, 0.4 + Math.random() * 0.3);
+      if (Math.random() > 0.5) {
+        graphics.fillRect(dx, dy, size, size * 0.6);
+      } else {
+        graphics.fillCircle(dx, dy, size * 0.5);
       }
     }
 
     // Dynamic environmental elements based on modifier
     const isDark = modifierId === 'darkness';
     const isLava = modifierId === 'lava';
-    
+
     const channelColor = isLava ? 0xff5a13 : isDark ? 0x111116 : 0x1a759f;
     const glowColor = isLava ? 0xffd166 : isDark ? 0x3d2745 : 0x76c893;
 
-    // Draw some stylized channels / chasms running through the dungeon
+    // Draw wider stylized channels / chasms running through the dungeon
     const channels = [
-      { x: width * 0.12, y: 130, w: 24, h: height - 230 },
-      { x: width * 0.42, y: height * 0.38, w: 32, h: height * 0.44 },
-      { x: width * 0.72, y: height * 0.28, w: 28, h: height * 0.48 },
-      { x: width * 0.22, y: height * 0.58, w: width * 0.62, h: 24 },
+      { x: width * 0.12, y: 130, w: 30, h: height - 230 },
+      { x: width * 0.42, y: height * 0.38, w: 38, h: height * 0.44 },
+      { x: width * 0.72, y: height * 0.28, w: 34, h: height * 0.48 },
+      { x: width * 0.22, y: height * 0.58, w: width * 0.62, h: 30 },
     ];
 
     channels.forEach((channel) => {
-      // Depth shadow
-      graphics.fillStyle(0x0b0d14, 1);
-      graphics.fillRect(channel.x - 4, channel.y - 4, channel.w + 8, channel.h + 8);
+      // Outer depth shadow
+      graphics.fillStyle(0x070910, 1);
+      graphics.fillRect(channel.x - 6, channel.y - 6, channel.w + 12, channel.h + 12);
       // Fluid/Chasm core
-      graphics.fillStyle(channelColor, 0.9);
+      graphics.fillStyle(channelColor, 0.85);
       graphics.fillRect(channel.x, channel.y, channel.w, channel.h);
-      // Edge highlight
-      graphics.lineStyle(1.5, glowColor, 0.8);
-      graphics.strokeRect(channel.x, channel.y, channel.w, channel.h);
+      // Inner glow highlight
+      graphics.lineStyle(2, glowColor, 0.7);
+      graphics.strokeRect(channel.x + 2, channel.y + 2, channel.w - 4, channel.h - 4);
+      // Outer edge highlight
+      graphics.lineStyle(1.5, glowColor, 0.35);
+      graphics.strokeRect(channel.x - 2, channel.y - 2, channel.w + 4, channel.h + 4);
+    });
+
+    // Edge vignette shadows — dark gradients around the arena borders
+    const vignetteDepth = 1;
+    // Top edge vignette
+    for (let i = 0; i < 4; i++) {
+      this.add.rectangle(width / 2, 112 + i * 8, width, 16, 0x070910, 0.3 - i * 0.06).setDepth(vignetteDepth);
+    }
+    // Bottom edge vignette
+    for (let i = 0; i < 4; i++) {
+      this.add.rectangle(width / 2, height - 84 - i * 8, width, 16, 0x070910, 0.3 - i * 0.06).setDepth(vignetteDepth);
+    }
+    // Left edge vignette
+    for (let i = 0; i < 3; i++) {
+      this.add.rectangle(i * 10, height / 2, 20, height, 0x070910, 0.25 - i * 0.07).setDepth(vignetteDepth);
+    }
+    // Right edge vignette
+    for (let i = 0; i < 3; i++) {
+      this.add.rectangle(width - i * 10, height / 2, 20, height, 0x070910, 0.25 - i * 0.07).setDepth(vignetteDepth);
+    }
+
+    // Flickering torch glow points along the edges
+    const torchPositions = [
+      { x: 16, y: 160 }, { x: 16, y: height * 0.5 }, { x: 16, y: height - 130 },
+      { x: width - 16, y: 160 }, { x: width - 16, y: height * 0.5 }, { x: width - 16, y: height - 130 },
+    ];
+    torchPositions.forEach((torch) => {
+      // Warm glow circle
+      const glow = this.add.circle(torch.x, torch.y, 28, 0xff8c00, 0.06).setDepth(vignetteDepth);
+      const innerGlow = this.add.circle(torch.x, torch.y, 14, 0xffaa33, 0.1).setDepth(vignetteDepth);
+      // Torch flame emoji
+      this.add.text(torch.x, torch.y, '🔥', { fontSize: '10px' }).setOrigin(0.5).setDepth(vignetteDepth + 1);
+      // Flicker animation
+      this.tweens.add({
+        targets: [glow, innerGlow],
+        alpha: { from: glow.alpha, to: glow.alpha * 0.4 },
+        duration: 400 + Math.random() * 600,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+        delay: Math.random() * 500,
+      });
     });
 
     // Embers / Particles rising from the channels
@@ -434,38 +514,59 @@ export class RuneGame extends Scene {
 
   private createSkillBar(width: number, height: number): void {
     const barY = height - 34;
-    this.add.rectangle(width / 2, barY, width, 68, 0x080b12, 0.82).setDepth(14);
+    this.add.rectangle(width / 2, barY, width, 68, 0x080b12, 0.88).setDepth(14);
     this.add.rectangle(width / 2, height - 68, width, 2, 0xff6b35, 0.45).setDepth(15);
 
-    const skills = ['⚔️', '5', '6', '✦'];
-    skills.forEach((skill, index) => {
-      const x = 24 + index * 48;
-      const btn = this.add.rectangle(x, barY, 38, 38, 0x111a2d, 0.95).setStrokeStyle(2, 0x326a7d, 1).setDepth(16);
-      const icon = this.add.text(x, barY - 2, skill, {
-        fontFamily: 'Inter, sans-serif',
-        fontSize: index === 0 || index === 3 ? '18px' : '16px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-      }).setOrigin(0.5).setDepth(17);
-      this.add.text(x, barY - 31, index === 3 ? 'ULT' : String(index + 1), {
-        fontFamily: 'Inter, sans-serif',
-        fontSize: '9px',
-        color: '#aebce0',
-      }).setOrigin(0.5).setDepth(17);
+    // Attack button (functional)
+    const atkX = 24;
+    this.add.rectangle(atkX, barY, 38, 38, 0x111a2d, 0.95).setStrokeStyle(2, 0x326a7d, 1).setDepth(16);
+    this.add.text(atkX, barY - 2, '⚔️', {
+      fontFamily: 'Inter, sans-serif', fontSize: '18px', color: '#ffffff', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(17);
+    this.add.text(atkX, barY - 31, 'ATK', {
+      fontFamily: 'Inter, sans-serif', fontSize: '9px', color: '#aebce0',
+    }).setOrigin(0.5).setDepth(17);
 
-      if (index === 3) {
-        this.ultButton = btn;
-        this.ultIcon = icon;
-        btn.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.performUlt());
-      }
-    });
+    // Gems stat display
+    const gemsX = 78;
+    this.add.rectangle(gemsX, barY, 50, 38, 0x111a2d, 0.95).setStrokeStyle(2, 0x326a7d, 1).setDepth(16);
+    this.add.text(gemsX, barY - 31, '💎 GEMS', {
+      fontFamily: 'Inter, sans-serif', fontSize: '9px', color: '#72efdd',
+    }).setOrigin(0.5).setDepth(17);
+    this.gemsValueText = this.add.text(gemsX, barY - 1, '0', {
+      fontFamily: 'Inter, sans-serif', fontSize: '14px', color: '#72efdd', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(17);
 
-    this.add.rectangle(width - 54, barY, 92, 34, 0x151923, 0.95).setStrokeStyle(2, 0x4a5368, 1).setDepth(16);
-    this.add.text(width - 54, barY - 6, 'SCORE', {
-      fontFamily: 'Inter, sans-serif',
-      fontSize: '10px',
-      color: '#aebce0',
-      fontStyle: 'bold',
+    // KOs stat display
+    const koX = 138;
+    this.add.rectangle(koX, barY, 50, 38, 0x111a2d, 0.95).setStrokeStyle(2, 0x326a7d, 1).setDepth(16);
+    this.add.text(koX, barY - 31, '☠️ KOs', {
+      fontFamily: 'Inter, sans-serif', fontSize: '9px', color: '#ff6b6b',
+    }).setOrigin(0.5).setDepth(17);
+    this.koValueText = this.add.text(koX, barY - 1, '0', {
+      fontFamily: 'Inter, sans-serif', fontSize: '14px', color: '#ff6b6b', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(17);
+
+    // ULT button (functional)
+    const ultX = 198;
+    const ultBtn = this.add.rectangle(ultX, barY, 38, 38, 0x111a2d, 0.95).setStrokeStyle(2, 0x326a7d, 1).setDepth(16);
+    const ultIcon = this.add.text(ultX, barY - 2, '✦', {
+      fontFamily: 'Inter, sans-serif', fontSize: '18px', color: '#ffffff', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(17);
+    this.add.text(ultX, barY - 31, 'ULT', {
+      fontFamily: 'Inter, sans-serif', fontSize: '9px', color: '#aebce0',
+    }).setOrigin(0.5).setDepth(17);
+    this.ultButton = ultBtn;
+    this.ultIcon = ultIcon;
+    ultBtn.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.performUlt());
+
+    // Live SCORE box (bottom-right)
+    this.add.rectangle(width - 54, barY, 92, 38, 0x151923, 0.95).setStrokeStyle(2, 0x4a5368, 1).setDepth(16);
+    this.add.text(width - 54, barY - 16, 'SCORE', {
+      fontFamily: 'Inter, sans-serif', fontSize: '9px', color: '#aebce0', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(17);
+    this.scoreValueText = this.add.text(width - 54, barY + 2, '0', {
+      fontFamily: 'Inter, sans-serif', fontSize: '16px', color: '#ffd166', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(17);
   }
 
@@ -599,19 +700,16 @@ export class RuneGame extends Scene {
 
   private spawnLoop(time: number) {
     const modifier = this.gameData?.raid.modifier.id;
-    // Progressive difficulty: spawn rates decrease (more spawns) as time progresses
-    // Phase 0-20s: easy, 20-40s: medium, 40-60s: hard
-    // Step function: Difficulty spikes every 10 seconds (10000ms)
-    const steps = Math.floor(this.elapsedMs / 10000); // 0 to 5
-    const phase = Math.min(steps / 5, 1); 
-    const rampFactor = 1 - phase * 0.6; // rates shrink by up to 60% at end
+    // Smooth linear difficulty ramp — no sudden spikes
+    const phase = Math.min(this.elapsedMs / 60000, 1); // 0.0 to 1.0 over 60s
+    const rampFactor = 1 - phase * 0.45; // rates shrink by up to 45% at end (smoother)
 
     const baseEnemyRate = modifier === 'ghosts' ? 1000 : 1300;
-    const baseGemRate = modifier === 'treasure' ? 720 : 960; // 20% faster than 1400/1800
+    const baseGemRate = modifier === 'treasure' ? 720 : 960;
     const baseTrapRate = modifier === 'lava' ? 1400 : 2200;
 
     const enemyRate = baseEnemyRate * rampFactor;
-    const gemRate = baseGemRate * Math.max(0.7, rampFactor); // gems don't slow as much
+    const gemRate = baseGemRate * Math.max(0.75, rampFactor); // gems don't slow as much
     const trapRate = baseTrapRate * rampFactor;
 
     if (time - this.lastEnemySpawn > enemyRate) {
@@ -854,9 +952,11 @@ export class RuneGame extends Scene {
 
     this.hpText?.setText(`❤️ ${Math.max(0, this.playerHp)}`);
     this.timerText?.setText(`⏱ ${remainingSeconds}s`);
-    this.damageText?.setText(
-      `⚔️ ${Math.round(this.damage)}  •  💎 ${this.gemsCollected}  •  KOs ${this.enemiesDefeated}`
-    );
+    this.damageText?.setText(`⚔️ ${Math.round(this.damage)}`);
+    // Live bottom bar stats
+    this.scoreValueText?.setText(`${Math.round(this.damage)}`);
+    this.gemsValueText?.setText(`${this.gemsCollected}`);
+    this.koValueText?.setText(`${this.enemiesDefeated}`);
     if (this.bossHealthFill) {
       const progress = Math.min(1, this.elapsedMs / raidLengthMs);
       this.bossHealthFill.width = Math.max(
